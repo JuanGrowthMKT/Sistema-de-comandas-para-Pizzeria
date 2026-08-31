@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Entorno virtual
+venv/
+.venv/
+
+# Base de datos / datos locales
+db.sqlite3
+
+# Prototipos sueltos sin enrutar
+dashboard.html
+pedidos.html
+ventas.html
