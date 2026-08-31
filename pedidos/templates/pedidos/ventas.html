@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos{% endblock %}
+
+{% block content %}
+
+<div class="col-12">
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card border-danger shadow-sm">
+                <div class="card-body py-3">
+                    <div class="text-muted small">Pendientes en cocina</div>
+                    <div class="fs-4 fw-bold text-danger" id="kpiPendientes">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-success shadow-sm">
+                <div class="card-body py-3">
+                    <div class="text-muted small">Entregados</div>
+                    <div class="fs-4 fw-bold text-success" id="kpiEntregados">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary shadow-sm">
+                <div class="card-body py-3">
+                    <div class="text-muted small">Monto total</div>
+                    <div class="fs-4 fw-bold" id="kpiMonto">$0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Resumen de ventas</h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm text-dark" id="filtroEstado">
+                    <option value="todos">Todos</option>
+                    <option value="pendiente">Pendiente en cocina</option>
+                    <option value="entregado">Entregado</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-danger">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Pedido</th>
+                            <th>Nombre</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

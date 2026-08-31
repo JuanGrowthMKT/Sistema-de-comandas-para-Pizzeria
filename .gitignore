@@ -10,7 +10,7 @@ venv/
 # Base de datos / datos locales
 db.sqlite3
 
-# Prototipos sueltos sin enrutar
-dashboard.html
-pedidos.html
-ventas.html
+# Prototipos sueltos sin enrutar (solo en la raíz)
+/dashboard.html
+/pedidos.html
+/ventas.html

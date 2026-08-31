@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos{% endblock %}
+
+{% block content %}
+        <div class="col-lg-5 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Nuevo pedido</h5>
+                </div>
+                <div class="card-body">
+                    <form id="formPedido" method='post'>
+                       {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">CLIENTE</label>
+                            <input type="text" class="form-control" id="nombre" name='cliente' required>
+                        </div>
+
+                        <div class="mb-3" id="tipoWrap">
+                            <label for="tipo" class="form-label">PEDIDO DE PIZZA</label>
+                            <select class="form-select" id="tipo" name='pizza'>
+                            {% for pizza in pizzas %}
+                                <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs. {{pizza.precio|floatformat:0}}</option>
+                            {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="switchMitad" name='mitad_y_mitad'>
+                            <label class="form-check-label" for="switchMitad">Mitad y mitad</label>
+                        </div>
+
+                        <div class="row g-2 mb-3 d-none" id="mitadesWrap">
+                            <div class="col-6">
+                                <label for="mitad1" class="form-label">MITAD 1</label>
+                                <select class="form-select" id="mitad1" name='mitad1'>
+                                    <option value="">Seleccione una opción</option>
+                                    {% for pizza in pizzas %}
+                                        <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs {{pizza.precio|floatformat:0}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="mitad2" class="form-label">MITAD 2</label>
+                                <select class="form-select" id="mitad2" name='mitad2'>
+                                    <option value="">Seleccione una opción</option>
+                                    {% for pizza in pizzas %}
+                                        <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs {{pizza.precio|floatformat:0}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="cantidad" class="form-label">CANTIDAD</label>
+                            <input type="number" class="form-control" id="cantidad" name='cantidad' value="1" min="1">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="extras" class="form-label">AGREGADOS</label>
+                            <textarea class="form-control" id="extras" name='notas' rows="2" placeholder="Ej: sin cebolla, bien de queso..."></textarea>
+                        </div>  
+
+                        <button type="submit" class="btn btn-dark w-100">AGREGAR</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+      
+{% endblock %}

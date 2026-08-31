@@ -66,3 +66,6 @@ def panel(request):
     if request.headers.get('HX-Request') == 'true':
         return render(request, 'pedidos/_cards.html', contexto)
     return render(request, 'pedidos/panelpedidos.html', contexto)
+
+def ventas(request):
+    return render(request, 'pedidos/ventas.html')
