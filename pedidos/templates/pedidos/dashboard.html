@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h4 class="mb-0">Analítica de ventas</h4>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-danger active" data-periodo="hoy">Hoy</button>
+            <button type="button" class="btn btn-outline-danger" data-periodo="mes">Mes</button>
+            <button type="button" class="btn btn-outline-danger" data-periodo="anio">Año</button>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Ingresos</div>
+                    <div class="fs-3 fw-bold text-danger" id="kpiIngresos">$0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Ticket promedio</div>
+                    <div class="fs-3 fw-bold" id="kpiTicket">$0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Producto más vendido</div>
+                    <div class="fs-5 fw-bold text-success" id="kpiMas">—</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Producto menos vendido</div>
+                    <div class="fs-5 fw-bold text-secondary" id="kpiMenos">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6 d-flex flex-column gap-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Resumen del periodo</h6></div>
+                <div class="card-body">
+                    <div class="text-muted small mb-2" id="periodoTexto">—</div>
+                    <div id="desgloseDias"></div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0">Ranking de productos</h6></div>
+                <div class="card-body" id="rankingProductos"></div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Top 3 días históricos con más ventas</h6>
+                    <div class="small text-muted">Anotá qué pasó ese día para entender por qué se logró.</div>
+                </div>
+                <div class="card-body" id="topDias"></div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

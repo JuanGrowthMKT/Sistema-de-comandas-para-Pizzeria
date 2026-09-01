@@ -12,6 +12,7 @@ class Pedido(models.Model):
     ESTADO_CHOICES = [
         ('pendiente', 'pendiente en cocina'),
         ('entregado', 'Entregado'),
+        ('cerrado', 'Cerrado'),
     ]
     cliente=models.CharField(max_length=100)
     estado=models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')

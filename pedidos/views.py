@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST 
 from .models import Pizza, Pedido, DetallePedido
+from django.db.models import Sum
 
 def pedidos(request):
     # Maneja la creación de pedidos y la visualización de pizzas y pedidos pendientes
@@ -34,38 +36,59 @@ def pedidos(request):
             subtotal=subtotal
         )
 
-        # Redirige a la misma página después de crear el pedido
-        return redirect('panel')
-
     # Obtiene las pizzas disponibles y los pedidos pendientes para mostrarlos en la plantilla
     pizzas = Pizza.objects.filter(disponible=True)
     pedidos = Pedido.objects.all().prefetch_related('detalles__pizza', 'detalles__pizza_mitad2').order_by('-fecha')
     return render(request, 'pedidos/pedidos.html', {
         'pizzas': pizzas,
         'pedidos': pedidos,
+        'seccion': 'pedidos',
     })
+    
 
+@require_POST
 def entregar(request, pedido_id):
     # Marca un pedido como entregado
-    # Si el método de la solicitud es POST, obtiene el pedido por su ID y cambia su estado a 'entregado', luego guarda los cambios y redirige a la página de pedidos.
-    if request.method == 'POST':
         # Obtiene el pedido por su ID y cambia su estado a 'entregado'
         pedido = get_object_or_404(Pedido, id=pedido_id)
         pedido.estado = 'entregado'
         pedido.save()
         return redirect('panel')
 
-def limpiar(request):
-    if request.method == 'POST':
-        Pedido.objects.filter(estado='entregado').delete()
-        return redirect('panel')
+@require_POST
+def cerrarCaja(request):
+        Pedido.objects.filter(estado='entregado').update(estado='cerrado')
+        return redirect('ventas')
 
 def panel(request):
-    pedidos = Pedido.objects.all().prefetch_related('detalles__pizza', 'detalles__pizza_mitad2')
+    pedidos = list(Pedido.objects.filter(estado='pendiente').prefetch_related('detalles__pizza', 'detalles__pizza_mitad2'))
+    pedidos.sort(key=lambda p: (0 if p.estado == 'pendiente' else 1, p.fecha))
     contexto = {'pedidos': pedidos}
     if request.headers.get('HX-Request') == 'true':
         return render(request, 'pedidos/_cards.html', contexto)
+    contexto['seccion'] = 'panel'
     return render(request, 'pedidos/panelpedidos.html', contexto)
 
 def ventas(request):
-    return render(request, 'pedidos/ventas.html')
+   pendientes = Pedido.objects.filter(estado='pendiente').count()
+   entregados = Pedido.objects.filter(estado='entregado').count()
+   total=int(Pedido.objects.filter(estado='entregado').aggregate(Sum('total'))['total__sum'] or 0)
+
+   estado=request.GET.get('estado')
+   pedidos=Pedido.objects.all()
+   if estado:
+        pedidos= pedidos.filter(estado=estado)
+
+   return render(request,'pedidos/ventas.html', {
+        'pendientes':pendientes,
+        'entregados':entregados,
+        'total':total,
+        'seccion':'ventas',
+        'pedidos':pedidos,
+        'estado_actual': estado or 'todos',
+   })
+
+def dashboard(request):
+    return render(request, 'pedidos/dashboard.html', {
+        'seccion': 'dashboard',
+    })

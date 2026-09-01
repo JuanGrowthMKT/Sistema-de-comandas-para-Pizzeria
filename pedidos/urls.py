@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.pedidos, name='pedidos'),
     path('panel/', views.panel, name='panel'),
     path('entregar/<int:pedido_id>/', views.entregar, name='entregar'),
-    path('limpiar', views.limpiar, name='limpiar'),
-    path('ventas/', views.ventas, name='ventas')
+    path('cerrarCaja/', views.cerrarCaja, name='cerrarCaja'),
+    path('ventas/', views.ventas, name='ventas'),
+    path('dashboard/', views.dashboard, name='dashboard'),
 ]

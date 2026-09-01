@@ -51,8 +51,7 @@
         }
         .btn-pulso {
             animation: radar-ping 1.6s ease-out infinite;
-        }
-        @keyframes radar-ping {
+        }        @keyframes radar-ping {
             0% {
                 box-shadow: 0 0 0 0 rgba(220, 53, 69, .55);
             }
@@ -60,6 +59,9 @@
                 box-shadow: 0 0 0 14px rgba(220, 53, 69, 0);
             }
         }
+        .bg-danger-tono { background-color: #f8d7da; }
+        .bg-success-tono { background-color: #d1e7dd; }
+        .bg-primary-tono { background-color: #cfe2ff; }
     </style>
 </head>
 <body class="bg-light">
@@ -72,10 +74,10 @@
         </button>
         <div class="collapse navbar-collapse" id="navMenu">
             <div class="navbar-nav">
-                <a class="nav-link active" href="{% url 'pedidos' %}">Pedidos</a>
-                <a class="nav-link active" href="{% url 'panel' %}">Panel de Pedidos</a>
-                <a class="nav-link" href="{% url 'ventas' %}">Resumen de ventas</a>
-                <a class="nav-link" href="#">Dashboard</a>
+                <a class="nav-link {% if seccion == 'pedidos' %}active{% endif %}" href="{% url 'pedidos' %}">Pedidos</a>
+                <a class="nav-link {% if seccion == 'panel' %}active{% endif %}" href="{% url 'panel' %}">Panel de Pedidos</a>
+                <a class="nav-link {% if seccion == 'ventas' %}active{% endif %}" href="{% url 'ventas' %}">Resumen de ventas</a>
+                <a class="nav-link {% if seccion == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
             </div>
         </div>
     </div>
