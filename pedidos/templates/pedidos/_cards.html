@@ -1,3 +1,4 @@
+{% load dinero %}
 <div class="row g-3"
      hx-get="{% url 'panel' %}"
      hx-trigger="every 1500ms"
@@ -29,7 +30,7 @@
                     <span class="badge bg-warning text-dark">Pendiente</span>
                     {% endif %}
                     <div class="text-end ms-auto">
-                        <strong class="d-block fs-5">Gs. {{ pedido.total|floatformat:0 }}</strong>
+                        <strong class="d-block fs-5">Gs. {{ pedido.total|guarani }}</strong>
                         <small class="text-muted">{{ pedido.fecha|time:"P" }}</small>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load dinero %}
 
 {% block title %}Pedidos{% endblock %}
 
@@ -20,7 +21,7 @@
                             <label for="tipo" class="form-label">PEDIDO DE PIZZA</label>
                             <select class="form-select" id="tipo" name='pizza'>
                             {% for pizza in pizzas %}
-                                <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs. {{pizza.precio|floatformat:0}}</option>
+                                <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs. {{pizza.precio|guarani}}</option>
                             {% endfor %}
                             </select>
                         </div>
@@ -36,7 +37,7 @@
                                 <select class="form-select" id="mitad1" name='mitad1'>
                                     <option value="">Seleccione una opción</option>
                                     {% for pizza in pizzas %}
-                                        <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs {{pizza.precio|floatformat:0}}</option>
+                                        <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs {{pizza.precio|guarani}}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -45,7 +46,7 @@
                                 <select class="form-select" id="mitad2" name='mitad2'>
                                     <option value="">Seleccione una opción</option>
                                     {% for pizza in pizzas %}
-                                        <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs {{pizza.precio|floatformat:0}}</option>
+                                        <option value='{{ pizza.id }}'>{{pizza.nombre}} Gs {{pizza.precio|guarani}}</option>
                                     {% endfor %}
                                 </select>
                             </div>

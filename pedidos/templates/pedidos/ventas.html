@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load dinero %}
 
 {% block title %}Pedidos{% endblock %}
 
@@ -28,7 +29,7 @@
             <div class="card border-primary bg-primary-tono shadow-sm">
                 <div class="card-body py-3">
                     <div class="small text-muted">Monto total</div>
-                    <div class="fs-4 fw-bold text-primary" id="kpiMonto">{{total|floatformat:0}}</div>
+                    <div class="fs-4 fw-bold text-primary" id="kpiMonto">{{total|guarani}}</div>
                 </div>
             </div>
         </div>
@@ -58,7 +59,7 @@
                         <tr>
                             <td>{{ pedido.fecha|date:"d/m" }} {{ pedido.fecha|time:"P" }}</td>
                             <td>{{ pedido.cliente }}</td>
-                            <td>Gs. {{ pedido.total|floatformat:0 }}</td>
+                            <td>Gs. {{ pedido.total|guarani }}</td>
                             <td><span class="badge bg-success">Entregado</span></td>
                         </tr>
                         {% endif %}
