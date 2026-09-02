@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load dinero %}
 
-{% block title %}Pedidos{% endblock %}
+{% block title %}Ventas{% endblock %}
 
 {% block seccion %}ventas{% endblock %}
 
@@ -83,7 +83,7 @@
             </div>
             <div class="modal-body">
                 <p class="mb-1">El total de ventas para el arqueo de caja es:</p>
-                <div class="fs-3 fw-bold text-danger text-center py-2">Gs. {{ total|floatformat:0 }}</div>
+                <div class="fs-3 fw-bold text-danger text-center py-2">Gs. {{ total|guarani }}</div>
                 <p class="text-muted small mb-0">Al confirmar, se cerrará la caja y el día quedará archivado. Podrás consultar el detalle histórico en el Dashboard.</p>
             </div>
             <div class="modal-footer">

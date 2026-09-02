@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST 
 from .models import Pizza, Pedido, DetallePedido
 from django.db.models import Sum
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import Concat, Coalesce, TruncDate, TruncMonth
 
 def pedidos(request):
     # Maneja la creación de pedidos y la visualización de pizzas y pedidos pendientes
@@ -89,6 +92,114 @@ def ventas(request):
    })
 
 def dashboard(request):
+    hora=timezone.now()
+    if hora.hour >=15:
+         apertura=hora.replace(hour=15, minute=0, second=0, microsecond=0)
+    else:
+         apertura = (hora - timedelta(days=1)).replace(hour=15, minute=0, second=0, microsecond=0)
+
+    temporalidad=request.GET.get('periodo', 'dia')
+    if temporalidad=='dia':
+         consulta_pedidos=Pedido.objects.filter(estado__in=['entregado', 'cerrado'], fecha__gte=apertura)
+         total_temporalidad=consulta_pedidos.aggregate(Sum('total'))['total__sum'] or 0
+         cantidad_pedidos=consulta_pedidos.count()
+         ticket_promedio=(total_temporalidad/cantidad_pedidos) if cantidad_pedidos > 0 else 0
+         ranking = analizar_productos_vendidos(apertura)
+
+    elif temporalidad == 'mes':
+        desde = hora.replace(day=1, hour=15, minute=0, second=0, microsecond=0)
+        consulta_pedidos=Pedido.objects.filter(estado__in=['entregado', 'cerrado'], fecha__gte=desde)
+        total_temporalidad=consulta_pedidos.aggregate(Sum('total'))['total__sum'] or 0
+        cantidad_pedidos=consulta_pedidos.count()
+        ticket_promedio=(total_temporalidad/cantidad_pedidos) if cantidad_pedidos > 0 else 0
+        ranking = analizar_productos_vendidos(desde)
+
+    else:
+        desde = hora.replace(month=1, day=1, hour=15, minute=0, second=0, microsecond=0)
+        consulta_pedidos=Pedido.objects.filter(estado__in=['entregado', 'cerrado'], fecha__gte=desde)
+        total_temporalidad=consulta_pedidos.aggregate(Sum('total'))['total__sum'] or 0
+        cantidad_pedidos=consulta_pedidos.count()
+        ticket_promedio=(total_temporalidad/cantidad_pedidos) if cantidad_pedidos > 0 else 0   
+        ranking = analizar_productos_vendidos(desde)
+
+    if temporalidad == 'dia':
+        resumen = [{'fecha': apertura, 'total': total_temporalidad}]
+        periodo_texto = 'Hoy'
+    elif temporalidad == 'mes':
+        resumen = list(
+            consulta_pedidos.annotate(diagrupo=TruncDate('fecha'))
+            .values('diagrupo')
+            .annotate(total=Sum('total'))
+            .order_by('diagrupo')
+        )
+        periodo_texto = hora.strftime('%B %Y').capitalize()
+    else:
+        resumen = list(
+            consulta_pedidos.annotate(mesgrupo=TruncMonth('fecha'))
+            .values('mesgrupo')
+            .annotate(total=Sum('total'))
+            .order_by('mesgrupo')
+        )
+        periodo_texto = 'Año ' + str(hora.year)
+
     return render(request, 'pedidos/dashboard.html', {
-        'seccion': 'dashboard',
-    })
+            'seccion': 'dashboard',
+            'ingresos':total_temporalidad,
+            'periodo':temporalidad,
+            'periodo_texto':periodo_texto,
+            'resumen':resumen,
+            'ticket_promedio':ticket_promedio,
+            'mas_vendido': ranking['mas_vendido'],
+            'menos_vendido': ranking['menos_vendido'],
+            'top3': ranking['top3'],
+            'top_dias': ranking['top_dias'],
+        })
+
+def analizar_productos_vendidos(apertura):
+    detalles = DetallePedido.objects.filter(
+    pedido__estado__in=['entregado', 'cerrado'],
+    pedido__fecha__gte=apertura
+    )
+
+    # 2. Agrupar en un diccionario
+    productos_vendidos = {}
+    for detalle in detalles:
+    # Construir el nombre de la combinación
+        if detalle.pizza_mitad2:
+            nombre = f"{detalle.pizza.nombre} + {detalle.pizza_mitad2.nombre}"
+        else:
+            nombre = detalle.pizza.nombre
+
+        if nombre in productos_vendidos:
+         productos_vendidos[nombre] += detalle.cantidad
+        else:
+         productos_vendidos[nombre] = detalle.cantidad
+
+# 3. Sacar el más y menos vendido
+    if productos_vendidos:
+        mas_vendido = max(productos_vendidos, key=productos_vendidos.get)
+        menos_vendido = min(productos_vendidos, key=productos_vendidos.get)
+    else:
+        mas_vendido = '—'
+        menos_vendido = '—'
+
+    top_3=sorted(productos_vendidos.items(), key=lambda x: x[1], reverse=True)[:3]
+
+    # 4. Top 3 días históricos con más ventas (sin filtro de periodo = histórico completo)
+    top_dias = list(
+        Pedido.objects
+        .filter(estado__in=['entregado', 'cerrado'])
+        .annotate(dia=TruncDate('fecha'))
+        .values('dia')
+        .annotate(total_dia=Sum('total'))
+        .order_by('-total_dia')[:3]
+    )
+
+    return {
+                'mas_vendido':mas_vendido,
+                'menos_vendido':menos_vendido,
+                'top3': top_3,
+                'top_dias': top_dias,
+            }
+    
+
