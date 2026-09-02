@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST 
+from django.contrib.auth.decorators import login_required
 from .models import Pizza, Pedido, DetallePedido, Jornada
 from django.db.models import Sum
 from django.utils import timezone
@@ -12,6 +13,7 @@ def jornada_activa():
 def jornada_context():
     return {'jornada': jornada_activa()}
 
+@login_required
 def abrir(request):
     # Abre la jornada de trabajo si no hay una abierta
     if request.method == 'POST':
@@ -20,6 +22,7 @@ def abrir(request):
         return redirect('dashboard')
     return redirect('pedidos')
 
+@login_required
 def pedidos(request):
     # Maneja la creación de pedidos y la visualización de pizzas y pedidos pendientes
     jornada = jornada_activa()
@@ -68,6 +71,7 @@ def pedidos(request):
     
 
 @require_POST
+@login_required
 def entregar(request, pedido_id):
     # Marca un pedido como entregado
         # Obtiene el pedido por su ID y cambia su estado a 'entregado'
@@ -77,6 +81,7 @@ def entregar(request, pedido_id):
         return redirect('panel')
 
 @require_POST
+@login_required
 def cerrarCaja(request):
         jornada = jornada_activa()
         if jornada:
@@ -87,6 +92,7 @@ def cerrarCaja(request):
         Pedido.objects.filter(estado='entregado').update(estado='cerrado')
         return redirect('ventas')
 
+@login_required
 def panel(request):
     pedidos = list(Pedido.objects.filter(estado='pendiente').prefetch_related('detalles__pizza', 'detalles__pizza_mitad2'))
     pedidos.sort(key=lambda p: (p.hora_entrega or p.fecha.time(), p.fecha))
@@ -97,6 +103,7 @@ def panel(request):
     contexto['jornada'] = jornada_activa()
     return render(request, 'pedidos/panelpedidos.html', contexto)
 
+@login_required
 def ventas(request):
    pendientes = Pedido.objects.filter(estado='pendiente').count()
    entregados = Pedido.objects.filter(estado='entregado').count()
@@ -117,6 +124,7 @@ def ventas(request):
         'jornada': jornada_activa(),
     })
 
+@login_required
 def dashboard(request):
     jornada = jornada_activa()
 

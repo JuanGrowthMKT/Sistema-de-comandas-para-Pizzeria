@@ -79,6 +79,14 @@
                 <a class="nav-link {% if seccion == 'ventas' %}active{% endif %}" href="{% url 'ventas' %}">Resumen de ventas</a>
                 <a class="nav-link {% if seccion == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Analítica de ventas</a>
             </div>
+            <div class="d-flex ms-auto mt-2 mt-lg-0">
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-light btn-sm">Salir ({{ user.username }})</button>
+                </form>
+                {% endif %}
+            </div>
         </div>
     </div>
 </nav>
