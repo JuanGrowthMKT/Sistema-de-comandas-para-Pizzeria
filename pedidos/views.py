@@ -1,13 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST 
-from .models import Pizza, Pedido, DetallePedido
+from .models import Pizza, Pedido, DetallePedido, Jornada
 from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import Concat, Coalesce, TruncDate, TruncMonth
 
+def jornada_activa():
+    return Jornada.objects.filter(fin__isnull=True).first()
+
+def jornada_context():
+    return {'jornada': jornada_activa()}
+
+def abrir(request):
+    # Abre la jornada de trabajo si no hay una abierta
+    if request.method == 'POST':
+        if not jornada_activa():
+            Jornada.objects.create()
+        return redirect('dashboard')
+    return redirect('pedidos')
+
 def pedidos(request):
     # Maneja la creación de pedidos y la visualización de pizzas y pedidos pendientes
+    jornada = jornada_activa()
     if request.method == 'POST':
         cliente = request.POST.get('cliente')
         cantidad = int(request.POST.get('cantidad', 1) or 1)
@@ -31,7 +46,7 @@ def pedidos(request):
         subtotal = precio * cantidad
 
         # Crea el pedido y el detalle del pedido
-        pedido = Pedido.objects.create(cliente=cliente, total=subtotal, hora_entrega=hora_entrega)
+        pedido = Pedido.objects.create(cliente=cliente, total=subtotal, hora_entrega=hora_entrega, jornada=jornada)
         DetallePedido.objects.create(
             pedido=pedido,
             pizza=pizza1,
@@ -48,6 +63,7 @@ def pedidos(request):
         'pizzas': pizzas,
         'pedidos': pedidos,
         'seccion': 'pedidos',
+        'jornada': jornada,
     })
     
 
@@ -62,6 +78,12 @@ def entregar(request, pedido_id):
 
 @require_POST
 def cerrarCaja(request):
+        jornada = jornada_activa()
+        if jornada:
+            total = int(Pedido.objects.filter(estado__in=['entregado', 'cerrado'], jornada=jornada).aggregate(Sum('total'))['total__sum'] or 0)
+            jornada.total = total
+            jornada.fin = timezone.now()
+            jornada.save()
         Pedido.objects.filter(estado='entregado').update(estado='cerrado')
         return redirect('ventas')
 
@@ -72,6 +94,7 @@ def panel(request):
     if request.headers.get('HX-Request') == 'true':
         return render(request, 'pedidos/_cards.html', contexto)
     contexto['seccion'] = 'panel'
+    contexto['jornada'] = jornada_activa()
     return render(request, 'pedidos/panelpedidos.html', contexto)
 
 def ventas(request):
@@ -91,42 +114,49 @@ def ventas(request):
         'seccion':'ventas',
         'pedidos':pedidos,
         'estado_actual': estado or 'todos',
-   })
+        'jornada': jornada_activa(),
+    })
 
 def dashboard(request):
-    hora=timezone.now()
-    if hora.hour >=15:
-         apertura=hora.replace(hour=15, minute=0, second=0, microsecond=0)
-    else:
-         apertura = (hora - timedelta(days=1)).replace(hour=15, minute=0, second=0, microsecond=0)
+    jornada = jornada_activa()
 
     temporalidad=request.GET.get('periodo', 'dia')
     if temporalidad=='dia':
-         consulta_pedidos=Pedido.objects.filter(estado__in=['entregado', 'cerrado'], fecha__gte=apertura)
-         total_temporalidad=consulta_pedidos.aggregate(Sum('total'))['total__sum'] or 0
-         cantidad_pedidos=consulta_pedidos.count()
-         ticket_promedio=(total_temporalidad/cantidad_pedidos) if cantidad_pedidos > 0 else 0
-         ranking = analizar_productos_vendidos(apertura)
+        # Día = la jornada de trabajo (la abierta, o la última cerrada)
+        ultima = Jornada.objects.filter(fin__isnull=False).order_by('-fin').first()
+        jornada_dia = jornada or ultima
+        if jornada_dia:
+            consulta_pedidos=Pedido.objects.filter(estado__in=['entregado', 'cerrado'], jornada=jornada_dia)
+            apertura = jornada_dia.inicio
+        else:
+            consulta_pedidos = Pedido.objects.none()
+            apertura = timezone.now()
+        total_temporalidad=consulta_pedidos.aggregate(Sum('total'))['total__sum'] or 0
+        cantidad_pedidos=consulta_pedidos.count()
+        ticket_promedio=(total_temporalidad/cantidad_pedidos) if cantidad_pedidos > 0 else 0
+        ranking = analizar_productos_por_jornada(jornada_dia)
 
     elif temporalidad == 'mes':
-        desde = hora.replace(day=1, hour=15, minute=0, second=0, microsecond=0)
+        hora = timezone.localtime()
+        desde = hora.replace(day=1)
         consulta_pedidos=Pedido.objects.filter(estado__in=['entregado', 'cerrado'], fecha__gte=desde)
         total_temporalidad=consulta_pedidos.aggregate(Sum('total'))['total__sum'] or 0
         cantidad_pedidos=consulta_pedidos.count()
         ticket_promedio=(total_temporalidad/cantidad_pedidos) if cantidad_pedidos > 0 else 0
-        ranking = analizar_productos_vendidos(desde)
+        ranking = analizar_productos_por_fecha(desde)
 
     else:
-        desde = hora.replace(month=1, day=1, hour=15, minute=0, second=0, microsecond=0)
+        hora = timezone.localtime()
+        desde = hora.replace(month=1, day=1)
         consulta_pedidos=Pedido.objects.filter(estado__in=['entregado', 'cerrado'], fecha__gte=desde)
         total_temporalidad=consulta_pedidos.aggregate(Sum('total'))['total__sum'] or 0
         cantidad_pedidos=consulta_pedidos.count()
         ticket_promedio=(total_temporalidad/cantidad_pedidos) if cantidad_pedidos > 0 else 0   
-        ranking = analizar_productos_vendidos(desde)
+        ranking = analizar_productos_por_fecha(desde)
 
     if temporalidad == 'dia':
         resumen = [{'fecha': apertura, 'total': total_temporalidad}]
-        periodo_texto = 'Hoy'
+        periodo_texto = 'Jornada'
     elif temporalidad == 'mes':
         resumen = list(
             consulta_pedidos.annotate(diagrupo=TruncDate('fecha'))
@@ -155,12 +185,13 @@ def dashboard(request):
             'menos_vendido': ranking['menos_vendido'],
             'top3': ranking['top3'],
             'top_dias': ranking['top_dias'],
+            'jornada': jornada,
         })
 
-def analizar_productos_vendidos(apertura):
+def analizar_productos_por_jornada(jornada):
     detalles = DetallePedido.objects.filter(
     pedido__estado__in=['entregado', 'cerrado'],
-    pedido__fecha__gte=apertura
+    pedido__jornada=jornada
     )
 
     # 2. Agrupar en un diccionario
@@ -188,6 +219,49 @@ def analizar_productos_vendidos(apertura):
     top_3=sorted(productos_vendidos.items(), key=lambda x: x[1], reverse=True)[:3]
 
     # 4. Top 3 días históricos con más ventas (sin filtro de periodo = histórico completo)
+    top_dias = list(
+        Pedido.objects
+        .filter(estado__in=['entregado', 'cerrado'])
+        .annotate(dia=TruncDate('fecha'))
+        .values('dia')
+        .annotate(total_dia=Sum('total'))
+        .order_by('-total_dia')[:3]
+    )
+
+    return {
+                'mas_vendido':mas_vendido,
+                'menos_vendido':menos_vendido,
+                'top3': top_3,
+                'top_dias': top_dias,
+            }
+
+def analizar_productos_por_fecha(desde):
+    detalles = DetallePedido.objects.filter(
+    pedido__estado__in=['entregado', 'cerrado'],
+    pedido__fecha__gte=desde
+    )
+
+    productos_vendidos = {}
+    for detalle in detalles:
+        if detalle.pizza_mitad2:
+            nombre = f"{detalle.pizza.nombre} + {detalle.pizza_mitad2.nombre}"
+        else:
+            nombre = detalle.pizza.nombre
+
+        if nombre in productos_vendidos:
+            productos_vendidos[nombre] += detalle.cantidad
+        else:
+            productos_vendidos[nombre] = detalle.cantidad
+
+    if productos_vendidos:
+        mas_vendido = max(productos_vendidos, key=productos_vendidos.get)
+        menos_vendido = min(productos_vendidos, key=productos_vendidos.get)
+    else:
+        mas_vendido = '—'
+        menos_vendido = '—'
+
+    top_3 = sorted(productos_vendidos.items(), key=lambda x: x[1], reverse=True)[:3]
+
     top_dias = list(
         Pedido.objects
         .filter(estado__in=['entregado', 'cerrado'])

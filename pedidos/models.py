@@ -8,6 +8,14 @@ class Pizza(models.Model):
     def __str__(self):
         return self.nombre
 
+class Jornada(models.Model):
+    inicio = models.DateTimeField(auto_now_add=True)
+    fin = models.DateTimeField(null=True, blank=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f'Jornada {self.inicio:%d/%m/%Y %H:%M}'
+
 class Pedido(models.Model):
     ESTADO_CHOICES = [
         ('pendiente', 'pendiente en cocina'),
@@ -18,6 +26,7 @@ class Pedido(models.Model):
     estado=models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     fecha=models.DateTimeField(auto_now_add=True)
     hora_entrega=models.TimeField(null=True, blank=True)
+    jornada=models.ForeignKey(Jornada, related_name='pedidos', on_delete=models.SET_NULL, null=True, blank=True)
     total=models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
