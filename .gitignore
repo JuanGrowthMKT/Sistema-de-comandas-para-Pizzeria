@@ -10,6 +10,9 @@ venv/
 # Base de datos / datos locales
 db.sqlite3
 
+# Estáticos compilados en el deploy
+staticfiles/
+
 # Prototipos sueltos sin enrutar (solo en la raíz)
 /dashboard.html
 /pedidos.html

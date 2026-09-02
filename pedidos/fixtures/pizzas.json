@@ -1,0 +1,56 @@
+[
+{
+  "model": "pedidos.pizza",
+  "pk": 1,
+  "fields": {
+    "nombre": "Pepperoni",
+    "precio": "45000.00",
+    "disponible": true
+  }
+},
+{
+  "model": "pedidos.pizza",
+  "pk": 2,
+  "fields": {
+    "nombre": "Jamón y Mozzarella",
+    "precio": "45000.00",
+    "disponible": true
+  }
+},
+{
+  "model": "pedidos.pizza",
+  "pk": 3,
+  "fields": {
+    "nombre": "Roquefort y Cherry",
+    "precio": "45000.00",
+    "disponible": true
+  }
+},
+{
+  "model": "pedidos.pizza",
+  "pk": 4,
+  "fields": {
+    "nombre": "Choclo y Katupiry",
+    "precio": "45000.00",
+    "disponible": true
+  }
+},
+{
+  "model": "pedidos.pizza",
+  "pk": 5,
+  "fields": {
+    "nombre": "Napolitana especial",
+    "precio": "45000.00",
+    "disponible": true
+  }
+},
+{
+  "model": "pedidos.pizza",
+  "pk": 6,
+  "fields": {
+    "nombre": "Cebolla",
+    "precio": "45000.00",
+    "disponible": true
+  }
+}
+]
