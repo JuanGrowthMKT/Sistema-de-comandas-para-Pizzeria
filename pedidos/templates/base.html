@@ -79,26 +79,6 @@
                 <a class="nav-link {% if seccion == 'ventas' %}active{% endif %}" href="{% url 'ventas' %}">Resumen de ventas</a>
                 <a class="nav-link {% if seccion == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Analítica de ventas</a>
             </div>
-            <div class="ms-auto d-flex align-items-center gap-2 mt-2 mt-lg-0">
-                <span class="text-white-50 small">Negocio</span>
-                {% if jornada %}
-                    <form method="post" action="{% url 'cerrarCaja' %}" data-confirm="¿Cerrar la jornada? Se hará el arqueo de caja.">
-                        {% csrf_token %}
-                        <div class="form-check form-switch m-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="swNegocio" checked onclick="this.form.submit();">
-                            <label class="form-check-label" for="swNegocio"><span class="badge bg-success">Abierto</span></label>
-                        </div>
-                    </form>
-                {% else %}
-                    <form method="post" action="{% url 'abrir' %}">
-                        {% csrf_token %}
-                        <div class="form-check form-switch m-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="swNegocio" onclick="this.form.submit();">
-                            <label class="form-check-label" for="swNegocio"><span class="badge bg-secondary">Cerrado</span></label>
-                        </div>
-                    </form>
-                {% endif %}
-            </div>
         </div>
     </div>
 </nav>
