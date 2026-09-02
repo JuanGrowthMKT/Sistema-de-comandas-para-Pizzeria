@@ -12,9 +12,11 @@ def pedidos(request):
         cliente = request.POST.get('cliente')
         cantidad = int(request.POST.get('cantidad', 1) or 1)
         notas = request.POST.get('notas', '')
+        hora_entrega = request.POST.get('hora_entrega') or None
         # Determina si el pedido es mitad y mitad
         mitad_y_mitad = request.POST.get('mitad_y_mitad') == 'on'
 
+        
         # Calcula el precio según si es mitad y mitad o no
         if mitad_y_mitad:
             pizza1 = get_object_or_404(Pizza, id=request.POST.get('mitad1'))
@@ -29,7 +31,7 @@ def pedidos(request):
         subtotal = precio * cantidad
 
         # Crea el pedido y el detalle del pedido
-        pedido = Pedido.objects.create(cliente=cliente, total=subtotal)
+        pedido = Pedido.objects.create(cliente=cliente, total=subtotal, hora_entrega=hora_entrega)
         DetallePedido.objects.create(
             pedido=pedido,
             pizza=pizza1,
@@ -65,7 +67,7 @@ def cerrarCaja(request):
 
 def panel(request):
     pedidos = list(Pedido.objects.filter(estado='pendiente').prefetch_related('detalles__pizza', 'detalles__pizza_mitad2'))
-    pedidos.sort(key=lambda p: (0 if p.estado == 'pendiente' else 1, p.fecha))
+    pedidos.sort(key=lambda p: (p.hora_entrega or p.fecha.time(), p.fecha))
     contexto = {'pedidos': pedidos}
     if request.headers.get('HX-Request') == 'true':
         return render(request, 'pedidos/_cards.html', contexto)

@@ -17,6 +17,7 @@ class Pedido(models.Model):
     cliente=models.CharField(max_length=100)
     estado=models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     fecha=models.DateTimeField(auto_now_add=True)
+    hora_entrega=models.TimeField(null=True, blank=True)
     total=models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:

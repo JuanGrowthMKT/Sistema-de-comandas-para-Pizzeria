@@ -30,8 +30,9 @@
                     <span class="badge bg-warning text-dark">Pendiente</span>
                     {% endif %}
                     <div class="text-end ms-auto">
+                        <strong class="d-block fs-4">{{ pedido.hora_entrega|time:"P" }}</strong>
+                        <small class="text-muted">llegó {{ pedido.fecha|time:"P" }}</small>
                         <strong class="d-block fs-5">Gs. {{ pedido.total|guarani }}</strong>
-                        <small class="text-muted">{{ pedido.fecha|time:"P" }}</small>
                     </div>
                 </div>
             </div>
