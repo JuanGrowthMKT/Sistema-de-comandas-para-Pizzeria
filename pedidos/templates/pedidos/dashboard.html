@@ -55,7 +55,7 @@
     <div class="row g-3">
         <div class="col-lg-6 d-flex flex-column gap-3">
             <div class="card shadow-sm">
-                <div class="card-header bg-white"><h6 class="mb-0">Resumen del periodo</h6></div>
+                <div class="card-header bg-transparent"><h6 class="mb-0">Resumen del periodo</h6></div>
                 <div class="card-body">
                     {% if periodo != 'dia' %}
                     <div class="text-muted small mb-2" id="periodoTexto">{{ periodo_texto }}</div>
@@ -79,7 +79,7 @@
                 </div>
             </div>
             <div class="card shadow-sm">
-                <div class="card-header bg-white"><h6 class="mb-0">Ranking de productos</h6></div>
+                <div class="card-header bg-transparent"><h6 class="mb-0">Ranking de productos</h6></div>
                 <div class="card-body" id="rankingProductos">
                 {% if top3 %}
             <ol class="list-group list-group-numbered">
@@ -100,7 +100,7 @@
 
         <div class="col-lg-6">
             <div class="card shadow-sm">
-                <div class="card-header bg-white">
+                <div class="card-header bg-transparent">
                     <h6 class="mb-0">Top 3 días históricos con más ventas</h6>
                 </div>
                 <div class="card-body" id="topDias">
