@@ -184,6 +184,10 @@
         .text-muted { color: var(--text-muted) !important; }
         hr { border-color: rgba(255,255,255,.08); }
         .table { color: var(--text); }
+        .table, .table > :not(caption) > * > * {
+            background-color: transparent !important;
+            color: var(--text) !important;
+        }
         .table-light { --bs-table-bg: #201c19; color: var(--gold-bright); }
         thead.table-light th,
         .table thead th {
