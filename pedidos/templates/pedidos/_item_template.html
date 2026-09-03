@@ -1,0 +1,51 @@
+{% load dinero %}
+<div class="item-row card border mb-2">
+    <div class="card-body py-2">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="small text-muted item-label">Pizza</span>
+            <button type="button" class="btn btn-outline-danger btn-sm btnQuitarItem">Quitar</button>
+        </div>
+        <div class="mb-2">
+            <select class="form-select" name="items[{{ item_index }}][pizza]" required>
+                <option value="">Seleccione una pizza</option>
+                {% for pizza in pizzas %}
+                    <option value="{{ pizza.id }}">{{ pizza.nombre }} Gs. {{ pizza.precio|guarani }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input switchMitad" type="checkbox" id="switchMitad{{ item_index }}" name="items[{{ item_index }}][mitad_y_mitad]">
+            <label class="form-check-label" for="switchMitad{{ item_index }}">Mitad y mitad</label>
+        </div>
+        <div class="row g-2 mb-2 mitadesWrap d-none">
+            <div class="col-6">
+                <label class="form-label small">MITAD 1</label>
+                <select class="form-select" name="items[{{ item_index }}][mitad1]">
+                    <option value="">—</option>
+                    {% for pizza in pizzas %}
+                        <option value="{{ pizza.id }}">{{ pizza.nombre }} Gs {{ pizza.precio|guarani }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6">
+                <label class="form-label small">MITAD 2</label>
+                <select class="form-select" name="items[{{ item_index }}][mitad2]">
+                    <option value="">—</option>
+                    {% for pizza in pizzas %}
+                        <option value="{{ pizza.id }}">{{ pizza.nombre }} Gs {{ pizza.precio|guarani }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col-4">
+                <label class="form-label small">CANTIDAD</label>
+                <input type="number" class="form-control" name="items[{{ item_index }}][cantidad]" value="1" min="1">
+            </div>
+            <div class="col-8">
+                <label class="form-label small">AGREGADOS</label>
+                <input type="text" class="form-control" name="items[{{ item_index }}][notas]" placeholder="Ej: sin cebolla">
+            </div>
+        </div>
+    </div>
+</div>

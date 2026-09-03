@@ -28,36 +28,45 @@ def pedidos(request):
     jornada = jornada_activa()
     if request.method == 'POST':
         cliente = request.POST.get('cliente')
-        cantidad = int(request.POST.get('cantidad', 1) or 1)
-        notas = request.POST.get('notas', '')
         hora_entrega = request.POST.get('hora_entrega') or None
-        # Determina si el pedido es mitad y mitad
-        mitad_y_mitad = request.POST.get('mitad_y_mitad') == 'on'
 
-        
-        # Calcula el precio según si es mitad y mitad o no
-        if mitad_y_mitad:
-            pizza1 = get_object_or_404(Pizza, id=request.POST.get('mitad1'))
-            pizza2 = get_object_or_404(Pizza, id=request.POST.get('mitad2'))
-            precio = (pizza1.precio + pizza2.precio) / 2   # promedio, como tu prototipo
-        else:
-            pizza1 = get_object_or_404(Pizza, id=request.POST.get('pizza'))
-            pizza2 = None
-            precio = pizza1.precio
+        total_pedido = 0
+        detalle_items = []
+        # Recolecta los items (líneas) del form, en orden por indice numerico
+        claves = [k for k in request.POST.keys() if k.startswith('items[')]
+        indices = sorted({k.split('[')[1].rstrip(']') for k in claves}, key=lambda x: int(x))
+        for idx in indices:
+            base = f'items[{idx}]'
+            pizza_id = request.POST.get(f'{base}[pizza]')
+            if not pizza_id:
+                continue
+            cantidad = int(request.POST.get(f'{base}[cantidad]', 1) or 1)
+            notas = request.POST.get(f'{base}[notas]', '')
+            mitad = request.POST.get(f'{base}[mitad_y_mitad]') == 'on'
 
-        # Calcula el subtotal
-        subtotal = precio * cantidad
+            if mitad:
+                pizza1 = get_object_or_404(Pizza, id=pizza_id)
+                pizza2_id = request.POST.get(f'{base}[mitad2]')
+                pizza2 = get_object_or_404(Pizza, id=pizza2_id) if pizza2_id else None
+                precio = (pizza1.precio + pizza2.precio) / 2 if pizza2 else pizza1.precio
+            else:
+                pizza1 = get_object_or_404(Pizza, id=pizza_id)
+                pizza2 = None
+                precio = pizza1.precio
 
-        # Crea el pedido y el detalle del pedido
-        pedido = Pedido.objects.create(cliente=cliente, total=subtotal, hora_entrega=hora_entrega, jornada=jornada)
-        DetallePedido.objects.create(
-            pedido=pedido,
-            pizza=pizza1,
-            pizza_mitad2=pizza2,
-            cantidad=cantidad,
-            notas=notas,
-            subtotal=subtotal
-        )
+            subtotal = precio * cantidad
+            total_pedido += subtotal
+            detalle_items.append({
+                'pizza': pizza1,
+                'pizza_mitad2': pizza2,
+                'cantidad': cantidad,
+                'notas': notas,
+                'subtotal': subtotal,
+            })
+
+        pedido = Pedido.objects.create(cliente=cliente, total=total_pedido, hora_entrega=hora_entrega, jornada=jornada)
+        for det in detalle_items:
+            DetallePedido.objects.create(pedido=pedido, **det)
 
     # Obtiene las pizzas disponibles y los pedidos pendientes para mostrarlos en la plantilla
     pizzas = Pizza.objects.filter(disponible=True)
