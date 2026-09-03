@@ -4,7 +4,7 @@
 {% block title %}Pedidos{% endblock %}
 
 {% block content %}
-        <div class="col-lg-5 mx-auto">
+        <div class="col-12 col-lg-9 mx-auto">
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Nuevo Pedido</h5>
@@ -13,61 +13,68 @@
                     {% if jornada %}
                     <form id="formPedido" method='post'>
                        {% csrf_token %}
+                        <div class="row g-4">
+                            <div class="col-12 col-lg-6">
+                                <div class="mb-3">
+                                    <label for="clientName" class="form-label">Nombre del Cliente</label>
+                                    <input type="text" class="form-control" id="clientName" name='cliente' placeholder="Ej: Carlos" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="pickupTime" class="form-label">Hora Estimada de Retiro</label>
+                                    <input type="time" class="form-control" id="pickupTime" name='hora_entrega' required>
+                                </div>
 
-                        <div class="mb-3">
-                            <label for="clientName" class="form-label">Nombre del Cliente</label>
-                            <input type="text" class="form-control" id="clientName" name='cliente' placeholder="Ej: Carlos" required>
+                                <hr>
+
+                                <div class="pizza-builder">
+                                    <label class="form-label" style="color: var(--gold-bright);">Armar Pizza</label>
+
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="isHalf">
+                                        <label class="form-check-label" for="isHalf">¿Es Mitad y Mitad?</label>
+                                    </div>
+
+                                    <div class="mb-2" id="singleFlavGroup">
+                                        <label class="form-label">Sabor Entero</label>
+                                        <select id="flavor1" class="form-select"></select>
+                                    </div>
+
+                                    <div class="row g-2 mb-2 d-none" id="halfFlavGroup">
+                                        <div class="col-6">
+                                            <label class="form-label">Primera Mitad</label>
+                                            <select id="flavor2" class="form-select"></select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Segunda Mitad</label>
+                                            <select id="flavor3" class="form-select"></select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-4">
+                                            <label class="form-label">Cantidad</label>
+                                            <input type="number" id="qty" class="form-control" value="1" min="1">
+                                        </div>
+                                        <div class="col-8">
+                                            <label class="form-label">Agregados</label>
+                                            <input type="text" id="notas" class="form-control" placeholder="Ej: sin cebolla">
+                                        </div>
+                                    </div>
+
+                                    <button type="button" id="btnAddPizza" class="btn btn-outline-dark w-100">+ Agregar esta pizza</button>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label" style="color: var(--gold-bright);">Pizzas de la comanda</label>
+                                <ul id="currentOrderPizzas" class="list-unstyled added-pizzas"></ul>
+                                <p id="noItems" class="text-muted small">Todavía no agregaste pizzas.</p>
+
+                                <input type="hidden" name="items_json" id="itemsJson" value="[]">
+
+                                <button type="submit" id="btnSubmit" class="btn btn-dark w-100 mt-3">Enviar a Cocina</button>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="pickupTime" class="form-label">Hora Estimada de Retiro</label>
-                            <input type="time" class="form-control" id="pickupTime" name='hora_entrega' required>
-                        </div>
-
-                        <hr>
-
-                        <div class="pizza-builder">
-                            <label class="form-label" style="color: var(--gold-bright);">Armar Pizza</label>
-
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" id="isHalf">
-                                <label class="form-check-label" for="isHalf">¿Es Mitad y Mitad?</label>
-                            </div>
-
-                            <div class="mb-2" id="singleFlavGroup">
-                                <label class="form-label">Sabor Entero</label>
-                                <select id="flavor1" class="form-select"></select>
-                            </div>
-
-                            <div class="row g-2 mb-2 d-none" id="halfFlavGroup">
-                                <div class="col-6">
-                                    <label class="form-label">Primera Mitad</label>
-                                    <select id="flavor2" class="form-select"></select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Segunda Mitad</label>
-                                    <select id="flavor3" class="form-select"></select>
-                                </div>
-                            </div>
-
-                            <div class="row g-2 mb-2">
-                                <div class="col-4">
-                                    <label class="form-label">Cantidad</label>
-                                    <input type="number" id="qty" class="form-control" value="1" min="1">
-                                </div>
-                                <div class="col-8">
-                                    <label class="form-label">Agregados</label>
-                                    <input type="text" id="notas" class="form-control" placeholder="Ej: sin cebolla">
-                                </div>
-                            </div>
-
-                            <button type="button" id="btnAddPizza" class="btn btn-outline-dark w-100">+ Agregar esta pizza</button>
-
-                            <ul id="currentOrderPizzas" class="list-unstyled added-pizzas mt-2"></ul>
-                        </div>
-
-                        <input type="hidden" name="items_json" id="itemsJson" value="[]">
-
-                        <button type="submit" id="btnSubmit" class="btn btn-dark w-100 mt-3">Enviar a Cocina</button>
                     </form>
                     {% else %}
                     <div class="text-center py-4">
@@ -99,6 +106,7 @@
     var btnAdd = document.getElementById('btnAddPizza');
     var ul = document.getElementById('currentOrderPizzas');
     var itemsJson = document.getElementById('itemsJson');
+    var noItems = document.getElementById('noItems');
 
     var currentItems = [];
 
@@ -119,6 +127,7 @@
 
     function renderList() {
         ul.innerHTML = '';
+        if (noItems) noItems.style.display = currentItems.length ? 'none' : 'block';
         currentItems.forEach(function (it, i) {
             var li = document.createElement('li');
             li.className = 'd-flex justify-content-between align-items-center rounded px-3 py-2 mb-1';
