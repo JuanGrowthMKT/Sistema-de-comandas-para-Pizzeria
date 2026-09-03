@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST 
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from .models import Pizza, Pedido, DetallePedido, Jornada
 from django.db.models import Sum
 from django.utils import timezone
@@ -27,50 +28,84 @@ def pedidos(request):
     # Maneja la creación de pedidos y la visualización de pizzas y pedidos pendientes
     jornada = jornada_activa()
     if request.method == 'POST':
-        cliente = request.POST.get('cliente')
+        cliente = (request.POST.get('cliente') or '').strip()
         hora_entrega = request.POST.get('hora_entrega') or None
 
-        total_pedido = 0
-        detalle_items = []
-        # Recolecta los items (líneas) del form desde el JSON acumulado por el frontend
         import json as _json
         try:
-            items_json = request.POST.get('items_json', '[]')
-            items = _json.loads(items_json)
+            items = _json.loads(request.POST.get('items_json', '[]'))
         except Exception:
             items = []
 
+        error = None
+        # Recolecta items validando de antemano para no crear pedidos rotos
+        total_pedido = 0
+        detalle_items = []
+        pizza_ids = set()
         for it in items:
-            pizza_id = it.get('pizza')
-            if not pizza_id:
+            try:
+                pizza_id = int(it.get('pizza'))
+            except (TypeError, ValueError):
                 continue
-            cantidad = int(it.get('cantidad', 1) or 1)
-            notas = it.get('notas', '') or ''
+            try:
+                cantidad = int(it.get('cantidad', 1) or 1)
+            except (TypeError, ValueError):
+                cantidad = 1
+            if cantidad < 1:
+                cantidad = 1
+            notas = (it.get('notas') or '').strip()
             mitad = it.get('mitad_y_mitad')
 
-            if mitad:
-                pizza1 = get_object_or_404(Pizza, id=pizza_id)
-                pizza2_id = it.get('mitad2')
-                pizza2 = get_object_or_404(Pizza, id=pizza2_id) if pizza2_id else None
-                precio = (pizza1.precio + pizza2.precio) / 2 if pizza2 else pizza1.precio
-            else:
-                pizza1 = get_object_or_404(Pizza, id=pizza_id)
-                pizza2 = None
-                precio = pizza1.precio
+            try:
+                pizza2_id = int(it.get('mitad2')) if mitad and it.get('mitad2') else None
+            except (TypeError, ValueError):
+                pizza2_id = None
 
-            subtotal = precio * cantidad
-            total_pedido += subtotal
+            pizza_ids.add(pizza_id)
+            if pizza2_id:
+                pizza_ids.add(pizza2_id)
+
             detalle_items.append({
-                'pizza': pizza1,
-                'pizza_mitad2': pizza2,
+                'pizza_id': pizza_id,
+                'pizza2_id': pizza2_id,
                 'cantidad': cantidad,
                 'notas': notas,
-                'subtotal': subtotal,
+                'mitad': bool(mitad),
             })
 
-        pedido = Pedido.objects.create(cliente=cliente, total=total_pedido, hora_entrega=hora_entrega, jornada=jornada)
-        for det in detalle_items:
-            DetallePedido.objects.create(pedido=pedido, **det)
+        if not cliente:
+            error = 'Debes indicar el nombre del cliente.'
+        elif not detalle_items:
+            error = 'Debes agregar al menos una pizza.'
+        else:
+            validas = set(Pizza.objects.filter(id__in=pizza_ids).values_list('id', flat=True))
+            invalidas = pizza_ids - validas
+            if invalidas:
+                error = 'Hay pizzas inválidas en el pedido.'
+
+        if error:
+            messages.error(request, error)
+        else:
+            total_pedido = 0
+            creados = []
+            for det in detalle_items:
+                pizza1 = Pizza.objects.get(id=det['pizza_id'])
+                pizza2 = Pizza.objects.get(id=det['pizza2_id']) if det['pizza2_id'] else None
+                precio = (pizza1.precio + pizza2.precio) / 2 if pizza2 else pizza1.precio
+                subtotal = precio * det['cantidad']
+                total_pedido += subtotal
+                creados.append({
+                    'pizza': pizza1,
+                    'pizza_mitad2': pizza2,
+                    'cantidad': det['cantidad'],
+                    'notas': det['notas'],
+                    'subtotal': subtotal,
+                })
+
+            pedido = Pedido.objects.create(cliente=cliente, total=total_pedido, hora_entrega=hora_entrega, jornada=jornada)
+            for det in creados:
+                DetallePedido.objects.create(pedido=pedido, **det)
+            messages.success(request, f'Comanda de {cliente} cargada correctamente.')
 
     # Obtiene las pizzas disponibles y los pedidos pendientes para mostrarlos en la plantilla
     pizzas = Pizza.objects.filter(disponible=True)

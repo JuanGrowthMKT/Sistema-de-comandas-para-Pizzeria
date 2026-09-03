@@ -164,6 +164,10 @@
         }
 
         /* MODAL */
+        .alert { border-radius: 10px; color: #fff; font-weight: 600; }
+        .alert-error, .alert-danger { background: rgba(198,40,40,.85); border-color: var(--red); }
+        .alert-success { background: rgba(46,125,50,.85); border-color: var(--green); }
+        .alert-info { background: rgba(212,163,89,.85); border-color: var(--gold); }
         .modal-content {
             background: linear-gradient(145deg, #23201d, #191715) !important;
             border: 1px solid rgba(212, 163, 89, 0.3) !important;
@@ -229,6 +233,14 @@
 </nav>
 
 <div class="container pb-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {{ message.tags|default:'info' }} alert-dismissible fade show mx-1" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
     <div class="row g-4">
     {% block content %}{% endblock %}
     </div>
