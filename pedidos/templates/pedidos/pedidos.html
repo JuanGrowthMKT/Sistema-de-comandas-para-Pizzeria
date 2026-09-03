@@ -4,10 +4,10 @@
 {% block title %}Pedidos{% endblock %}
 
 {% block content %}
-        <div class="col-lg-6 mx-auto">
+        <div class="col-lg-5 mx-auto">
             <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Nuevo pedido</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Nuevo Pedido</h5>
                 </div>
                 <div class="card-body">
                     {% if jornada %}
@@ -15,31 +15,60 @@
                        {% csrf_token %}
 
                         <div class="mb-3">
-                            <label for="nombre" class="form-label">CLIENTE</label>
-                            <input type="text" class="form-control" id="nombre" name='cliente' required>
-                        </div>
-
-                        <div class="mb-1">
-                            <label class="form-label">PIZZAS / ITEMS</label>
-                        </div>
-                        <div id="itemsWrap">
-                            {% include 'pedidos/_item_template.html' with item_index=0 %}
+                            <label for="clientName" class="form-label">Nombre del Cliente</label>
+                            <input type="text" class="form-control" id="clientName" name='cliente' placeholder="Ej: Carlos" required>
                         </div>
                         <div class="mb-3">
-                            <button type="button" class="btn btn-outline-dark btn-sm w-100" id="btnAgregarItem">+ Agregar pizza</button>
+                            <label for="pickupTime" class="form-label">Hora Estimada de Retiro</label>
+                            <input type="time" class="form-control" id="pickupTime" name='hora_entrega' required>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="horaEntrega" class="form-label">HORA DE BÚSQUEDA</label>
-                            <input type="time" class="form-control" id="horaEntrega" name='hora_entrega' required>
+                        <hr>
+
+                        <div class="pizza-builder">
+                            <label class="form-label" style="color: var(--gold-bright);">Armar Pizza</label>
+
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="isHalf">
+                                <label class="form-check-label" for="isHalf">¿Es Mitad y Mitad?</label>
+                            </div>
+
+                            <div class="mb-2" id="singleFlavGroup">
+                                <label class="form-label">Sabor Entero</label>
+                                <select id="flavor1" class="form-select"></select>
+                            </div>
+
+                            <div class="row g-2 mb-2 d-none" id="halfFlavGroup">
+                                <div class="col-6">
+                                    <label class="form-label">Primera Mitad</label>
+                                    <select id="flavor2" class="form-select"></select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Segunda Mitad</label>
+                                    <select id="flavor3" class="form-select"></select>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-4">
+                                    <label class="form-label">Cantidad</label>
+                                    <input type="number" id="qty" class="form-control" value="1" min="1">
+                                </div>
+                                <div class="col-8">
+                                    <label class="form-label">Agregados</label>
+                                    <input type="text" id="notas" class="form-control" placeholder="Ej: sin cebolla">
+                                </div>
+                            </div>
+
+                            <button type="button" id="btnAddPizza" class="btn btn-outline-dark w-100">+ Agregar esta pizza</button>
+
+                            <ul id="currentOrderPizzas" class="list-unstyled added-pizzas mt-2"></ul>
                         </div>
 
-                        <button type="submit" class="btn btn-dark w-100">GUARDAR COMANDAS</button>
+                        <input type="hidden" name="items_json" id="itemsJson" value="[]">
+
+                        <button type="submit" id="btnSubmit" class="btn btn-dark w-100 mt-3">Enviar a Cocina</button>
                     </form>
-
-                    <template id="itemTemplate">
-                        {% include 'pedidos/_item_template.html' with item_index='__N__' %}
-                    </template>
                     {% else %}
                     <div class="text-center py-4">
                         <p class="text-muted mb-3">El negocio está cerrado. Abrí la jornada para cargar pedidos.</p>
@@ -52,48 +81,93 @@
                 </div>
             </div>
         </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    (function () {
-        var wrap = document.getElementById('itemsWrap');
-        var template = document.getElementById('itemTemplate');
-        var btn = document.getElementById('btnAgregarItem');
-        var itemIndex = 1;
+    {{ pizzas_json|json_script:"pizzasData" }}
+    var __pizzas = JSON.parse(document.getElementById('pizzasData').textContent);
 
-        document.querySelectorAll('.item-row').forEach(function (row) {
-            initRow(row);
+    var flavor1 = document.getElementById('flavor1');
+    var flavor2 = document.getElementById('flavor2');
+    var flavor3 = document.getElementById('flavor3');
+    var isHalf = document.getElementById('isHalf');
+    var singleFlavGroup = document.getElementById('singleFlavGroup');
+    var halfFlavGroup = document.getElementById('halfFlavGroup');
+    var qty = document.getElementById('qty');
+    var notas = document.getElementById('notas');
+    var btnAdd = document.getElementById('btnAddPizza');
+    var ul = document.getElementById('currentOrderPizzas');
+    var itemsJson = document.getElementById('itemsJson');
+
+    var currentItems = [];
+
+    (function fillSelects() {
+        var html = '';
+        __pizzas.forEach(function (p) {
+            html += '<option value="' + p.id + '">' + p.nombre + ' Gs. ' + p.precio_texto + '</option>';
         });
-
-        btn.addEventListener('click', function () {
-            var html = template.innerHTML.replace(/__N__/g, itemIndex);
-            var tmp = document.createElement('div');
-            tmp.innerHTML = html;
-            var row = tmp.firstElementChild;
-            itemIndex++;
-            wrap.appendChild(row);
-            initRow(row);
-        });
-
-        function initRow(row) {
-            var sw = row.querySelector('.switchMitad');
-            var mitades = row.querySelector('.mitadesWrap');
-            var remove = row.querySelector('.btnQuitarItem');
-            if (sw) {
-                sw.addEventListener('change', function (e) {
-                    mitades.classList.toggle('d-none', !e.target.checked);
-                });
-            }
-            if (remove) {
-                remove.addEventListener('click', function () {
-                    if (wrap.querySelectorAll('.item-row').length > 1) {
-                        row.remove();
-                    }
-                });
-            }
-        }
+        flavor1.innerHTML = html;
+        flavor2.innerHTML = html;
+        flavor3.innerHTML = html;
     })();
+
+    isHalf.addEventListener('change', function () {
+        singleFlavGroup.classList.toggle('d-none', isHalf.checked);
+        halfFlavGroup.classList.toggle('d-none', !isHalf.checked);
+    });
+
+    function renderList() {
+        ul.innerHTML = '';
+        currentItems.forEach(function (it, i) {
+            var li = document.createElement('li');
+            li.className = 'd-flex justify-content-between align-items-center rounded px-3 py-2 mb-1';
+            li.style.cssText = 'background:#181513;border-left:3px solid var(--gold);color:#eaeaea;font-size:.9rem;';
+            li.innerHTML = '<span>' + it.texto + '</span>' +
+                '<button type="button" class="btn-del" style="background:none;border:none;color:#ff5252;font-weight:bold;font-size:1.1rem;" data-i="' + i + '">✕</button>';
+            ul.appendChild(li);
+        });
+    }
+
+    function syncJson() {
+        itemsJson.value = JSON.stringify(currentItems.map(function (it) {
+            return { pizza: it.pizza, mitad_y_mitad: it.mitad, mitad2: it.mitad2, cantidad: it.cantidad, notas: it.notas };
+        }));
+    }
+
+    btnAdd.addEventListener('click', function () {
+        var mitad = isHalf.checked;
+        var texto, payload;
+        if (!mitad) {
+            var f1 = flavor1.value;
+            var n1 = flavor1.options[flavor1.selectedIndex].text;
+            texto = qty.value + 'x ' + n1;
+            payload = { pizza: f1, mitad: false, mitad2: null, cantidad: parseInt(qty.value) || 1, notas: notas.value };
+        } else {
+            var f2 = flavor2.value, f3 = flavor3.value;
+            var n2 = flavor2.options[flavor2.selectedIndex].text;
+            var n3 = flavor3.options[flavor3.selectedIndex].text;
+            texto = qty.value + 'x Mitad ' + n2 + ' / Mitad ' + n3;
+            payload = { pizza: f2, mitad: true, mitad2: f3, cantidad: parseInt(qty.value) || 1, notas: notas.value };
+        }
+        currentItems.push({ texto: texto, pizza: payload.pizza, mitad: payload.mitad, mitad2: payload.mitad2, cantidad: payload.cantidad, notas: payload.notas });
+        renderList();
+        syncJson();
+    });
+
+    ul.addEventListener('click', function (e) {
+        if (e.target.classList.contains('btn-del')) {
+            currentItems.splice(parseInt(e.target.dataset.i), 1);
+            renderList();
+            syncJson();
+        }
+    });
+
+    document.getElementById('formPedido').addEventListener('submit', function (e) {
+        if (currentItems.length === 0) {
+            e.preventDefault();
+            alert('Agregá al menos una pizza.');
+        }
+    });
 </script>
 {% endblock %}

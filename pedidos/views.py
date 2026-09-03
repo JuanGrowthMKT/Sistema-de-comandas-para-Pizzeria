@@ -32,21 +32,25 @@ def pedidos(request):
 
         total_pedido = 0
         detalle_items = []
-        # Recolecta los items (líneas) del form, en orden por indice numerico
-        claves = [k for k in request.POST.keys() if k.startswith('items[')]
-        indices = sorted({k.split('[')[1].rstrip(']') for k in claves}, key=lambda x: int(x))
-        for idx in indices:
-            base = f'items[{idx}]'
-            pizza_id = request.POST.get(f'{base}[pizza]')
+        # Recolecta los items (líneas) del form desde el JSON acumulado por el frontend
+        import json as _json
+        try:
+            items_json = request.POST.get('items_json', '[]')
+            items = _json.loads(items_json)
+        except Exception:
+            items = []
+
+        for it in items:
+            pizza_id = it.get('pizza')
             if not pizza_id:
                 continue
-            cantidad = int(request.POST.get(f'{base}[cantidad]', 1) or 1)
-            notas = request.POST.get(f'{base}[notas]', '')
-            mitad = request.POST.get(f'{base}[mitad_y_mitad]') == 'on'
+            cantidad = int(it.get('cantidad', 1) or 1)
+            notas = it.get('notas', '') or ''
+            mitad = it.get('mitad_y_mitad')
 
             if mitad:
                 pizza1 = get_object_or_404(Pizza, id=pizza_id)
-                pizza2_id = request.POST.get(f'{base}[mitad2]')
+                pizza2_id = it.get('mitad2')
                 pizza2 = get_object_or_404(Pizza, id=pizza2_id) if pizza2_id else None
                 precio = (pizza1.precio + pizza2.precio) / 2 if pizza2 else pizza1.precio
             else:
@@ -71,8 +75,17 @@ def pedidos(request):
     # Obtiene las pizzas disponibles y los pedidos pendientes para mostrarlos en la plantilla
     pizzas = Pizza.objects.filter(disponible=True)
     pedidos = Pedido.objects.all().prefetch_related('detalles__pizza', 'detalles__pizza_mitad2').order_by('-fecha')
+    pizzas_json = [        {
+            'id': p.id,
+            'nombre': p.nombre,
+            'precio': float(p.precio),
+            'precio_texto': f"{p.precio:,.0f}".replace(',', '.'),
+        }
+        for p in pizzas
+    ]
     return render(request, 'pedidos/pedidos.html', {
         'pizzas': pizzas,
+        'pizzas_json': pizzas_json,
         'pedidos': pedidos,
         'seccion': 'pedidos',
         'jornada': jornada,
