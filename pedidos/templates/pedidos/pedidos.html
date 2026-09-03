@@ -84,8 +84,8 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ pizzas_json|json_script:"pizzasData" }}
 <script>
-    {{ pizzas_json|json_script:"pizzasData" }}
     var __pizzas = JSON.parse(document.getElementById('pizzasData').textContent);
 
     var flavor1 = document.getElementById('flavor1');
