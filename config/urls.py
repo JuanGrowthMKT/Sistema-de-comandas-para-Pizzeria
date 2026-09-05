@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path, include
 
-admin_url = os.environ.get('DJANGO_ADMIN_URL', 'admin/').lstrip('/')
+admin_url = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/')
 
 urlpatterns = [
     path(f'{admin_url}/', admin.site.urls),
